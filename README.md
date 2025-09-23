@@ -9,11 +9,11 @@ A real-time object detection and labeling pipeline that combines a YOLO detector
 - Fully local setup (optionally use remote models)
 
 ## How it Works
-- **Detection:** YOLO infers every --frame-delay frames and filters by --confidence
-- **Storing:** Object is given a UID stored in self.prev_box_ids, and bounding boxes are stored in self.prev_boxes
-- **Tracking heuristic:** Centers + IoU matching update prev_boxes and stable UIDs
-- **Labeling:** Async queue crops frame per stored box -> base64 -> POST to Ollama --server with --vlm to generate text label
-- **Censoring:** Pixelates class person when --censor is True, skips labeling and boundary box drawing
+- **Detection:** YOLO infers every `--frame-delay` frames and filters by `--confidence`
+- **Storing:** Object is given a UID stored in `prev_box_ids`, and bounding boxes are stored in `prev_boxes`
+- **Tracking heuristic:** Centers + IoU matching update `prev_boxes` and stable UIDs
+- **Labeling:** Async queue crops frame per stored box -> base64 -> POST to Ollama `--server` with `--vlm` to generate text label
+- **Censoring:** Pixelates class person when `--censor` is True, skips labeling and boundary box drawing
 
 ## Next Steps
 - SAM integration for better object segmentation
