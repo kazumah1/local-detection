@@ -71,4 +71,4 @@ python main.py --vlm llava:13b --detection-model face/last.pt
 
 ### Notes
 - Ensure your VLM supports image inputs via Ollama’s `/api/generate` with `images` payloads.
-- The README previously suggested auto-downloading the `.pt` file; currently the code expects the file to be present locally.
+- Although it is suggested to download your `.pt` file before running the script, the script will automatically download the weights to the `--detection-model` file path if it doesn't exist
