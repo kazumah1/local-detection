@@ -1,4 +1,4 @@
-from ultralytics import YOLO
+from ultralytics import YOLO, FastSAM, SAM
 import cv2
 import math
 import cvzone
@@ -15,11 +15,11 @@ import time
 import pyautogui
 import argparse
 
-model = YOLO('yolo11n.pt')
+# model = YOLO('yolo11n.pt')
 # model = YOLO('face/last.pt')
 
 
-class_names = model.names
+# class_names = model.names
 '''['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light', 'fire hydrant', 
 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe', 
 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat', 
@@ -27,14 +27,20 @@ class_names = model.names
 'banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch', 'potted plant', 
 'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone', 'microwave', 'oven', 'toaster', 'sink', 
 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush']'''
-colors = [(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)) for _ in range(len(class_names))]
+# colors = [(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)) for _ in range(len(class_names))]
 
 class RealTimeDetector:
     def __init__(self, vlm="llava:7b", detection_model="yolo11n.pt", llm_server="http://localhost:11434", confidence_level=0.3, frame_delay=5):
         self.vlm = vlm
-        self.detection_model = YOLO(detection_model)
+        if detection_model[:4] == "yolo":
+            self.detection_model = YOLO(detection_model)
+        elif detection_model[:7] == "FastSAM":
+            self.detection_model = FastSAM(detection_model)
+        elif detection_model[:3] == "sam":
+            self.detection_model = SAM(detection_model)
+        else:
+            raise ValueError(f"Invalid detection model: {detection_model}")
         self.class_names = self.detection_model.names
-        self.processor = LlavaNextProcessor.from_pretrained("llava-hf/llava-1.5-7b-hf")
         self.colors = [(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)) for _ in range(len(self.class_names))]
         self.server = llm_server
         self.confidence_level = confidence_level
@@ -69,7 +75,7 @@ class RealTimeDetector:
     
     def detect_objects(self, img, censor):
         self.current_frame = img.copy()
-        results = self.detection_model(img, stream=True)
+        results = self.detection_model(img, stream=True, imgsz=640, conf=0.5, iou=0.02, retina_masks=False, max_det=100)
         b_class = 0
         conf = 0
         for r in results:
@@ -93,7 +99,7 @@ class RealTimeDetector:
                     
                     # Replace the region
                     img[y1:y2, x1:x2] = pixelated_roi
-                elif conf > 0.5:
+                elif conf > self.confidence_level:
                     uid = self._generate_uid()
                     self.curr_box_ids.append(uid)
                     self.tmp_coords[uid] = [x1, y1, x2, y2]
@@ -105,7 +111,7 @@ class RealTimeDetector:
             x1, y1, x2, y2 = self.prev_boxes[uid]
             
             # Get metadata for this object (use defaults if not found)
-            metadata = self.object_metadata.get(uid, {'class': 0, 'conf': 0.5})
+            metadata = self.object_metadata.get(uid, {'class': 0, 'conf': 0.3})
             obj_class = metadata['class']
             obj_conf = metadata['conf']
             
@@ -323,11 +329,11 @@ def main():
     parser = argparse.ArgumentParser(description="Real Time Object Detector + Identifier")
     parser.add_argument('--censor', default=False, type=bool, help="boolean for censoring faces/people")
     parser.add_argument('--source', default=0, type=int, choices=[0, 1], help="video source [0:webcam, 1:screen capture]")
-    parser.add_argument('--vlm', default='llava:7b', type=str, help='VLM model name')
-    parser.add_argument('--detection-model', default='yolo11n.pt', type=str, help='object detection model file')
+    parser.add_argument('--vlm', default='qwen2.5vl:7b', type=str, help='VLM model name')
+    parser.add_argument('--detection-model', default='FastSAM-s.pt', type=str, help='object detection model file')
     parser.add_argument('--server', default='http://localhost:11434', type=str, help='VLM model server URL')
     parser.add_argument('--confidence', default=0.3, type=float, help="confidence threshold for object detection")
-    parser.add_argument('--frame-delay', default=5, type=int, help='object detection intervals')
+    parser.add_argument('--frame-delay', default=1, type=int, help='object detection intervals')
 
     args = parser.parse_args()
     detector = RealTimeDetector(
