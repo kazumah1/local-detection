@@ -23,7 +23,7 @@ A comprehensive real-time computer vision system with two main approaches: objec
 - **Labeling:** Async queue crops frame per stored box -> base64 -> POST to Ollama `--server` with `--vlm` to generate text label
 - **Censoring:** Pixelates class person when `--censor` is True, skips labeling and boundary box drawing
 
-### 2. Motion Analysis Mode (`labeler.py`)
+### 2. Motion Analysis Mode (`analyzer.py`)
 **Best for**: Scene understanding, activity recognition, real-time responsiveness
 
 **How it Works:**
@@ -66,7 +66,7 @@ python object_detector.py [args]
 
 **Motion Analysis Mode:**
 ```
-python labeler.py [args]
+python analyzer.py [args]
 ```
 
 ## Arguments
@@ -80,7 +80,7 @@ python labeler.py [args]
 - `--censor` (bool): Enable face/person pixelation. Default: `False`.
 - `--source` (int): Video source: `0` = webcam, `1` = screen capture. Default: `0`.
 
-### Motion Analysis Mode (`labeler.py`)
+### Motion Analysis Mode (`analyzer.py`)
 - `--vlm` (str): VLM model name. Default: `qwen2.5vl:7b`.
 - `--subtractor` (str): Background subtractor algorithm. Options: `MOG2`, `KNN`. Default: `KNN`.
 - `--server` (str): VLM server URL. Default: `http://localhost:11434`.
@@ -109,17 +109,17 @@ python object_detector.py --vlm llava:13b --detection-model face/last.pt
 ### Motion Analysis Mode
 Run with defaults (webcam, KNN subtractor, qwen2.5vl:7b):
 ```
-python labeler.py
+python analyzer.py
 ```
 
 Use MOG2 background subtractor with higher motion sensitivity:
 ```
-python labeler.py --subtractor MOG2 --motion 0.5
+python analyzer.py --subtractor MOG2 --motion 0.5
 ```
 
 Use screen capture with different VLM:
 ```
-python labeler.py --source 1 --vlm llava:7b
+python analyzer.py --source 1 --vlm llava:7b
 ```
 
 ## Performance Comparison
